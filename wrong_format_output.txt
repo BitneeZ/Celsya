@@ -1,0 +1,50 @@
+[
+    {
+      "step": 1,
+      "description": "Изучение основ HTML и CSS"
+    },
+    {
+      "step": 2,
+      "description": "Изучение основ JavaScript"
+    },
+    {
+      "step": 3,
+      "description": "Изучение основ PHP"
+    },
+    {
+      "step": 4,
+      "description": "Изучение основ SQL"
+    },
+    {
+      "step": 5,
+      "description": "Изучение основ веб-серверов (например, Apache или Nginx)"
+    },
+    {
+      "step": 6,
+      "description": "Изучение основ верстки и SEO-оптимизации"
+    },
+    {
+      "step": 7,
+      "description": "Изучение основ верстки на React"
+    },
+    {
+      "step": 8,
+      "description": "Изучение основ веб-программирования с использованием фреймворков"
+    },
+    {
+      "step": 9,
+      "description": "Изучение основ веб-сервисов и API"
+    },
+    {
+      "step": 10,
+      "description": "Изучение основ DevOps и контейнеризации"
+    },
+    {
+      "step": 11,
+      "description": "Изучение основ верстки на Angular"
+    },
+    {
+      "step": 12,
+      ...
+    }
+  ]
