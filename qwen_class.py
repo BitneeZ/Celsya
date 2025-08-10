@@ -1,18 +1,7 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
 from llama_cpp import Llama
 from json_repair import repair_json
 import json
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-ROADMAP_PROMPT = """
-Ты — ассистент по планированию. Пользователь задаёт тему, а ты создаёшь roadmap в формате JSON:
-[
-  {"step": 1, "description": "..."},
-  {"step": 2, "description": "..."}
-]
-Тема: {topic}
-"""
-
+from prompts import ROADMAP_PROMPT
 
 class QwenChatbot:
     def __init__(self, model_name):
@@ -33,6 +22,7 @@ class QwenChatbot:
             stop=["</s>"]
         )
 
+        #? что делает
         self.last_output = output["choices"][0]["text"].strip()
     
     def to_json(self, topic):
@@ -44,10 +34,8 @@ class QwenChatbot:
             roadmap_data = json.loads(json_text)
         except json.JSONDecodeError:
             print("Ошибка: модель вернула некорректный JSON")
-
             with open('wrong_format_output.txt', 'w', encoding='utf-8') as f:
                 f.write(json_text)
-                # print(f'ERROR: {json_text}')
             
             roadmap_data = json.loads(repair_json(json_text))
 
@@ -56,7 +44,7 @@ class QwenChatbot:
             "roadmap": roadmap_data
         }, ensure_ascii=False, indent=2)
 
-# Example Usage
+
 if __name__ == "__main__":
     MODEL = 'C:/Users/Redmi/.lmstudio/models/lmstudio-community/Qwen3-4B-GGUF/Qwen3-4B-Q4_K_M.gguf'
     chatbot = QwenChatbot(model_name=MODEL)
