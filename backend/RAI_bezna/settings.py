@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-o%s1h2=ey($jhjnlk%3xqlis8f!hbesc_8$!y79e+i49(7l@2o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["10.0.2.2", "127.0.0.1"]
+ALLOWED_HOSTS = ["10.0.2.2", "127.0.0.1", "10.245.94.213"]
 
 AUTH_USER_MODEL = "roadmap.User"
 

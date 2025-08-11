@@ -32,20 +32,25 @@ class RegisterSerializer(serializers.ModelSerializer):
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all())]
     )
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    username = serializers.CharField(
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        validators=[validate_password]
+    )
 
     class Meta:
         model = User
-        # если используешь стандартную модель User — оставляем username, но клиент не обязан передавать username;
-        # мы можем установить username равным email для совместимости.
-        fields = ("email", "password")
-        # либо: fields = ("username","email","password","password2") — в зависимости от твоей реализации
+        fields = ("username", "email", "password")
 
     def create(self, validated_data):
+        username = validated_data['username']
         email = validated_data['email']
         password = validated_data['password']
-        # Если ваша модель User требует username — установим username == email
-        user = User.objects.create_user(username=email, email=email, password=password)
+        user = User.objects.create_user(username=username, email=email, password=password)
         return user
 
 class LoginSerializer(serializers.Serializer):

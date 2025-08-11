@@ -17,9 +17,7 @@ class User(AbstractUser):
     deleted_at = models.DateTimeField(blank=True, null=True)
 
     email = models.EmailField(unique=True, blank=False, null=False)
-    username = models.CharField(max_length=150, unique=False, blank=True, null=True)
-
-    USERNAME_FIELD = 'email'
+    username = models.CharField(max_length=150, unique=True, blank=True, null=True)
 
     REQUIRED_FIELDS = []
     def mark_active(self):

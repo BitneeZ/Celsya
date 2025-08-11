@@ -11,7 +11,7 @@ def get_roadmap_from_service(topic: str) -> dict:
     ROADMAP_API_URL = "http://10.245.94.56:8080/generate_roadmap"
     try:
         # Формируем тело запроса в соответствии с моделью RoadmapRequest в main.py
-        payload = {"topic": topic, "max_tokens": 512}
+        payload = {"topic": topic, "max_tokens": 2048}
 
         # Отправляем POST-запрос
         # Устанавливаем таймаут, чтобы не ждать вечно, если сервис "завис"
