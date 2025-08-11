@@ -3,3 +3,4 @@ __pycache__/
 backend/RAI_bezna/__pycache__
 backend/roadmap/__pycache__
 backend/roadmap/migrations
+backend_venv
