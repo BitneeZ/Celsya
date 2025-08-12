@@ -1,7 +1,9 @@
 fastapi
-uvicorn
 torch
 transformers
 accelerate
 sentencepiece
-bitsandbytes
+uvicorn[standard]
+llama-cpp-python
+json-repair
+httpx
