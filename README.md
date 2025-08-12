@@ -25,5 +25,35 @@ python manage.py migrate
 Готово
 
 ----Запуск клиента(android)----
+Далее будет гайд для llm
 
+Для того чтобы запустить ии чтобы она локально могла принимать запросы с сервера и отправлять json как ответ надо сделать докер контейнер
+ФАЙЛЫ в отдельную папку для создания только их в докер:
+models(папка с моделью)
+Dockerfile
+docker-compose.yml
+llm.py
+prompts.py
+requirements.txt
+roadmap_gen.py
+1) Открываем консоль от имени админа
+2) Мы должны быть в директории(папке) проекта 
+3) пишем в консоль docker build qwen
+4) потом docker compose up --build -d
+5) ждите
+6) чтобы офнуть контейнер надо написать docker compose down
+7) а чтобы включить надо прописать docker compose up -d
+8) вы научились создавать контейнер в докере УХУ, он готов принимать запросы в локальной сети из бд.
+	P.S. для того чтобы оно всё работало скачайте модель создайте папку models и поместите модель туда и у вас всё должно заработать. У МЕНЯ ЗАРАБОТАЛО!!!!
+```python
+# !pip install llama-cpp-python
+
+from llama_cpp import Llama
+
+llm = Llama.from_pretrained(
+	repo_id="Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+	filename="qwen2.5-1.5b-instruct-fp16.gguf",
+)
+
+```
 
