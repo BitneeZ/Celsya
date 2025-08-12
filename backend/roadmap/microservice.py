@@ -8,7 +8,7 @@ def get_roadmap_from_service(topic: str) -> dict:
     """
     Отправляет запрос к API в Docker-контейнере для генерации роадмапа.
     """
-    ROADMAP_API_URL = "http://10.245.94.56:8080/generate_roadmap"
+    ROADMAP_API_URL = "http://10.245.94.65:8080/generate_roadmap"
     try:
         # Формируем тело запроса в соответствии с моделью RoadmapRequest в main.py
         payload = {"topic": topic, "max_tokens": 2048}

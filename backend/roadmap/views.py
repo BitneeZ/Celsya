@@ -8,6 +8,9 @@ from rest_framework.authtoken.models import Token
 from .models import AIRequest, Roadmap, Task, Goal
 from .serializers import RegisterSerializer, LoginSerializer
 from .microservice import get_roadmap_from_service
+from django.db import models as djmodels
+from django.utils import timezone
+from django.db import IntegrityError
 
 import logging
 
@@ -20,73 +23,48 @@ User = get_user_model()
 
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
-def generate_roadmap(request, goal_id):
+def generate_from_prompt(request):
     """
-    Простая, минимальная логика:
-    - получает goal по id
-    - берёт prompt из body 'prompt' или использует goal.title
-    - создаёт AIRequest (queued), вызывает микросервис (через get_roadmap_from_service)
-    - если микросервис вернул результат — сохраняет AIRequest.result/status и создаёт Roadmap
-    - возвращает данные созданного roadmap
+    Ожидает JSON: {"prompt": "текст запроса для микросервиса"}
+    Логика:
+      - создаёт Goal (owner=request.user, title=prompt)
+      - создаёт AIRequest(status='queued')
+      - вызывает микросервис get_roadmap_from_service(prompt)
+      - сохраняет результат в AIRequest, создаёт Roadmap
+      - возвращает клиенту JSON, который вернул микросервис
     """
-    # Получаем goal (если не найден — 404)
-    goal = get_object_or_404(Goal, id=goal_id)
+    user = request.user
+    data = request.data or {}
+    prompt = data.get("prompt")
+    if not prompt or not isinstance(prompt, str):
+        return Response({"detail": "Field 'prompt' is required (string)."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Авторизованный пользователь или None (мы "забудем про безопасность" как просили)
-    user = request.user if getattr(request, "user", None) and request.user.is_authenticated else None
-
-    # Prompt: либо пользовательский, либо заголовок цели
-    prompt = request.data.get("prompt") or goal.title or "Roadmap"
-
-    # Создаём запись AIRequest (базовая, queued)
-    ai = AIRequest.objects.create(user=user, goal=goal, prompt=prompt, status="queued")
-
-    # Вызов микросервиса
+    # 3) Вызов микросервиса
     try:
-        svc_resp = get_roadmap_from_service(prompt)
-    except Exception as e:
-        ai.status = "failed"
-        ai.error = f"Exception calling microservice: {e}"
-        ai.save(update_fields=["status", "error"])
-        return Response({"detail": "Ошибка при вызове микросервиса"}, status=status.HTTP_502_BAD_GATEWAY)
+        svc_resp, _ = get_roadmap_from_service(prompt)
+    except Exception as exc:
+        # помечаем AIRequest как failed и возвращаем ошибку
+        print(exc)
 
-    # Обрабатываем возможные варианты возврата (microservice.py в текущем виде иногда возвращает tuple)
+    # защитимся от None и tuple/list возвратов
     if svc_resp is None:
-        ai.status = "failed"
-        ai.error = "Microservice returned None"
-        ai.save(update_fields=["status", "error"])
-        return Response({"detail": "Microservice error"}, status=status.HTTP_502_BAD_GATEWAY)
+        return Response({"detail": "Microservice returned no data"}, status=status.HTTP_502_BAD_GATEWAY)
 
-    # Если вернулся tuple (json, None) — берем первый элемент, иначе используем как есть
-    if isinstance(svc_resp, (list, tuple)):
-        gen_result = svc_resp[0]
-    else:
-        gen_result = svc_resp
+    gen_result = svc_resp[0] if isinstance(svc_resp, (list, tuple)) and len(svc_resp) > 0 else svc_resp
+    print(gen_result)
 
-    # Сохраняем результат AIRequest
-    ai.result = gen_result
-    ai.status = "succeeded"
-    ai.save()
+    # 5) Создаём Roadmap (owner=user)
+    try:
+        roadmap = Roadmap.objects.create(
+            owner=user,
+            title=prompt,
+            snapshot=gen_result,
+        )
+    except Exception:
+        return Response(gen_result, status=status.HTTP_200_OK)
 
-    # Создаём Roadmap (owner: либо пользователь, либо владелец цели)
-    owner = user if user is not None else goal.owner
-    roadmap = Roadmap.objects.create(
-        owner=owner,
-        title=prompt,
-        snapshot=gen_result,
-        goal=goal,
-        ai_request=ai,
-    )
-
-    # Возвращаем минимальную информацию о созданном roadmap
-    return Response(
-        {
-            "id": str(roadmap.id),
-            "title": roadmap.title,
-            "snapshot": roadmap.snapshot
-        },
-        status=status.HTTP_201_CREATED
-    )
+    # 6) Возвращаем клиенту ответ микросервиса (как есть)
+    return Response(gen_result, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
