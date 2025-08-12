@@ -29,13 +29,13 @@ python manage.py migrate
 
 Для того чтобы запустить ии чтобы она локально могла принимать запросы с сервера и отправлять json как ответ надо сделать докер контейнер
 ФАЙЛЫ в отдельную папку для создания только их в докер:
-models(папка с моделью)
-Dockerfile
-docker-compose.yml
-llm.py
-prompts.py
-requirements.txt
-roadmap_gen.py
+* models(папка с моделью)
+* Dockerfile
+* docker-compose.yml
+* llm.py
+* prompts.py
+* requirements.txt
+* roadmap_gen.py
 1) Открываем консоль от имени админа
 2) Мы должны быть в директории(папке) проекта 
 3) пишем в консоль docker build qwen
