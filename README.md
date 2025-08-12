@@ -1,4 +1,4 @@
-Провеьте чтобы устройство с клиентом, сервером и сервис были подключены к одной локальной сети
+Проверьте чтобы устройство с клиентом, сервером и сервис были подключены к одной локальной сети
 
 ----Запуск сервера(backend)----
 
@@ -6,9 +6,9 @@
 
 В psql создаем Базу данных и пользователя, пример: createdb bezna createuser --interactive psql -c "ALTER USER bezna WITH PASSWORD '12345678';" psql -c "GRANT ALL PRIVILEGES ON DATABASE bezna TO bezna;"
 
-В случае изменения названий баззы данных, меняйте название в Celsya/backend/RAI_bezna/setting.py в поле DATABASES на свои
+В случае изменения названий базы данных, меняйте название в Celsya/backend/RAI_bezna/setting.py в поле DATABASES на свои
 
-В файле Celsya/backend/roadmap/microservice.py измените ROADMAP_API_URL на ссылку открытого порта устройства с сервисом
+В файле Celsya/backend/roadmap/microservice.py измените ROADMAP_API_URL на ссылку открытого порта шзм4 устройства с сервисом
 
 Переходим в папку проекта и создаем виртуальное окружение python: python -m venv backend_venv
 
@@ -25,8 +25,18 @@ python manage.py migrate
 Готово
 
 ----Запуск клиента(android)----
-Далее будет гайд для llm
 
+Скачайте файл Celsya.rar и Android studio(желательно версии 2023.2.1 patch 1)
+
+Разархивируйте Celsya.rar и запустите папку в Android studio(обязательно в пути разирхивации не должно быть кирилицы)
+
+В файле C:\Celsya\app\src\main\java\com\example\celsya\RetrofitClient.kt измените BASE_URL на ipv4 вашего сервера
+
+Скачайте все зависимости, скомпилировуйте приложение
+
+Готово
+
+----Запуск сервиса----
 Для того чтобы запустить ии чтобы она локально могла принимать запросы с сервера и отправлять json как ответ надо сделать докер контейнер
 ФАЙЛЫ в отдельную папку для создания только их в докер:
 * models(папка с моделью)
