@@ -25,3 +25,5 @@ python manage.py migrate
 Готово
 
 ----Запуск клиента(android)----
+
+
