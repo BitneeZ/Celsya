@@ -1,5 +1,7 @@
 Провеьте чтобы устройство с клиентом, сервером и сервис были подключены к одной локальной сети
+
 ----Запуск сервера(backend)----
+
 Для работы необходимо установить PostgreSQL
 В psql создаем Базу данных и пользователя, пример: createdb bezna createuser --interactive psql -c "ALTER USER bezna WITH PASSWORD '12345678';" psql -c "GRANT ALL PRIVILEGES ON DATABASE bezna TO bezna;"
 В случае изменения названий баззы данных, меняйте название в Celsya/backend/RAI_bezna/setting.py в поле DATABASES на свои
