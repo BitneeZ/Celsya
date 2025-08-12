@@ -9,6 +9,13 @@ from .models import AIRequest, Roadmap, Task, Goal
 from .serializers import RegisterSerializer, LoginSerializer
 from .microservice import get_roadmap_from_service
 
+import logging
+
+print(">>> LOADED roadmap.views module")
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 User = get_user_model()
 
 @api_view(["POST"])
@@ -120,26 +127,91 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
+        # Быстрая трассировка — гарантированно попадёт в stdout
+        print(">>> RegisterView.create entered")
+
+        # Логируем заголовки и тело (raw + parsed)
+        try:
+            headers = {k: v for k, v in request.META.items() if k.startswith("HTTP_") or k in ("CONTENT_TYPE", "CONTENT_LENGTH")}
+            logger.debug("Register request PATH=%s METHOD=%s", request.path, request.method)
+            logger.debug("Register request headers: %s", headers)
+            logger.debug("Register request.data (parsed): %s", request.data)
+            try:
+                raw = request.body.decode("utf-8")
+            except Exception:
+                raw = "<non-decodable>"
+            logger.debug("Register raw body: %s", raw)
+        except Exception:
+            logger.exception("Failed to log incoming registration request")
+
+        # Создаём сериализатор и валидируем без raise_exception, чтобы получить serializer.errors
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            # Логируем ошибки валидации и возвращаем их в ответе (чтобы клиент видел, что не так)
+            logger.warning("Register validation failed: %s", serializer.errors)
+            # Маскируем пароль в логах/ответе (безопаснее)
+            errors_for_response = dict(serializer.errors)
+            try:
+                if 'password' in errors_for_response:
+                    # оставляем текст ошибки, но НЕ возвращаем сам пароль
+                    pass
+            except Exception:
+                pass
+
+            return Response({"detail": "validation_error", "errors": errors_for_response}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Если валидно — сохраняем и возвращаем токен
         user = serializer.save()
         token, _ = Token.objects.get_or_create(user=user)
+        logger.info("New user created: %s", user.email)
         return Response({"token": token.key, "email": user.email}, status=status.HTTP_201_CREATED)
 
 
 class LoginView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
-    serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data["email"]
-        password = serializer.validated_data["password"]
+        data = dict(request.data or {})
+        masked = dict(data)
+        if "password" in masked:
+            masked["password"] = "***"
+        logger.debug("Login attempt (masked): %s", masked)
 
-        user = authenticate(request, email=email, password=password)
+        email = data.get("email")
+        password = data.get("password")
+        if not email or not password:
+            return Response({"detail": "email and password required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Попробуем разные варианты authenticate и залогируем результат
+        user = None
+        try:
+            user = authenticate(request, username=email, password=password)
+            logger.debug("authenticate(request, username=...) returned: %r", user)
+        except Exception:
+            logger.exception("authenticate(request, username=...) raised")
+
         if user is None:
-            return Response({"detail": "Неверный email или пароль"}, status=status.HTTP_401_UNAUTHORIZED)
+            try:
+                user = authenticate(request, email=email, password=password)
+                logger.debug("authenticate(request, email=...) returned: %r", user)
+            except Exception:
+                logger.exception("authenticate(request, email=...) raised")
+
+        # Если authenticate вернул None, попробуем явный fallback (поиск + check_password)
+        if user is None:
+            try:
+                u = User.objects.filter(email__iexact=email).first()
+                logger.debug("Fallback lookup user by email returned: %r", u)
+                if u is not None and u.check_password(password) and u.is_active:
+                    user = u
+                    logger.debug("Fallback check_password succeeded for user %r", u)
+            except Exception:
+                logger.exception("Error during fallback user lookup")
+
+        if user is None:
+            logger.info("Login failed for email=%s", email)
+            return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
         token, _ = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key, "email": user.email}, status=status.HTTP_200_OK)
+        logger.info("Login success for user=%s", getattr(user, "email", user.username))
+        return Response({"token": token.key, "email": getattr(user, "email", user.username)}, status=status.HTTP_200_OK)
